@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成績計算系統 - 李向宇老師製作</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .teacher-badge {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 25px;
+            font-size: 1em;
+            backdrop-filter: blur(10px);
+            letter-spacing: 2px;
+        }
+
+        .teacher-badge .icon {
+            margin-right: 8px;
+        }
+
+        .content {
+            padding: 30px 40px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            margin: 15px 0 10px 0;
+            font-size: 1.2em;
+        }
+
+        .format-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+
+        .format-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .format-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .format-table tr:hover {
+            background: #f0f0ff;
+        }
+
+        .format-table .highlight {
+            background: #fff3cd;
+            font-weight: 600;
+        }
+
+        .example-box {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .example-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .example-table th {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #5a67d8;
+        }
+
+        .example-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .example-table .alt-row {
+            background: #f8f9fa;
+        }
+
+        .rule-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+
+        .rule-list li {
+            padding: 10px 15px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .rule-list li.warning {
+            border-left-color: #ffc107;
+        }
+
+        .rule-list li.danger {
+            border-left-color: #dc3545;
+        }
+
+        .file-upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            background: #f0f0ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .file-upload-area:hover {
+            background: #e8e8ff;
+            border-color: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .file-info {
+            display: none;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #155724;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+            white-space: nowrap;
+        }
+
+        .control-group input {
+            width: 80px;
+            padding: 8px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .control-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .result-area {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-area.show {
+            display: block;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            border-top: 4px solid #667eea;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .stat-label {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .formula-display {
+            background: #e7f3ff;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+
+        .formula-display strong {
+            color: #667eea;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        .result-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .result-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-table tr:hover {
+            background: #f0f0ff;
+        }
+
+        .result-table .selected {
+            background: #fff3cd;
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .result-table .selected::after {
+            content: ' ⭐';
+        }
+
+        .export-preview {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .export-preview h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .export-preview p {
+            color: #856404;
+            margin: 5px 0;
+        }
+
+        .message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: #e9ecef;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #495057;
+        }
+
+        .tab-btn.active {
+            background: white;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 25px 40px;
+            margin-top: 30px;
+        }
+
+        .footer .teacher-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+
+        .footer .teacher-title {
+            font-size: 0.95em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .footer .copyright {
+            font-size: 0.85em;
+            opacity: 0.7;
+            margin-top: 8px;
+        }
+
+        .highlight-box {
+            background: white;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                justify-content: space-between;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ==================== 頁首 ==================== -->
+        <div class="header">
+            <h1>📊 成績計算系統</h1>
+            <p>⚖️ 自訂權重版 - 支援 Excel 匯入匯出、自動選取最高分</p>
+            <div class="teacher-badge">
+                <span class="icon">👨‍🏫</span> 李向宇老師 製作
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- ==================== 使用說明 ==================== -->
+            <div class="section">
+                <h2>📋 Excel 檔案輸入格式說明</h2>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('format')">📐 格式結構</button>
+                    <button class="tab-btn" onclick="switchTab('example')">📝 實際範例</button>
+                    <button class="tab-btn" onclick="switchTab('rules')">⚠️ 重要規則</button>
+                    <button class="tab-btn" onclick="switchTab('download')">💾 下載範本</button>
+                </div>
+
+                <!-- 格式結構 -->
+                <div id="tab-format" class="tab-content active">
+                    <h3>🗂️ 欄位結構說明</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="format-table">
+                            <thead>
+                                <tr>
+                                    <th>欄位順序</th>
+                                    <th>欄位名稱</th>
+                                    <th>資料類型</th>
+                                    <th>說明</th>
+                                    <th>必填</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>第 1 欄</strong></td>
+                                    <td>班級</td>
+                                    <td>文字/數字</td>
+                                    <td>學生的班級編號</td>
+                                    <td>✅ 必填</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>第 2 欄</strong></td>
+                                    <td>座號</td>
+                                    <td>數字</td>
+                                    <td>學生的座號</td>
+                                    <td>✅ 必填</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>第 3 欄</strong></td>
+                                    <td>姓名</td>
+                                    <td>文字</td>
+                                    <td>學生的姓名</td>
+                                    <td>✅ 必填</td>
+                                </tr>
+                                <tr class="highlight">
+                                    <td><strong>第 4 欄起</strong></td>
+                                    <td>平時成績</td>
+                                    <td>數字</td>
+                                    <td>各次平時測驗成績（可無限擴充）</td>
+                                    <td>✅ 至少1欄</td>
+                                </tr>
+                                <tr class="highlight">
+                                    <td><strong>倒數第 3 欄</strong></td>
+                                    <td>作業成績 1</td>
+                                    <td>數字</td>
+                                    <td>第一次作業分數</td>
+                                    <td>✅ 必填</td>
+                                </tr>
+                                <tr class="highlight">
+                                    <td><strong>倒數第 2 欄</strong></td>
+                                    <td>作業成績 2</td>
+                                    <td>數字</td>
+                                    <td>第二次作業分數</td>
+                                    <td>✅ 必填</td>
+                                </tr>
+                                <tr class="highlight">
+                                    <td><strong>倒數第 1 欄</strong></td>
+                                    <td>作業成績 3</td>
+                                    <td>數字</td>
+                                    <td>第三次作業分數</td>
+                                    <td>✅ 必填</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>📊 結構圖解</h3>
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; overflow-x: auto; text-align: center;">
+                        <pre style="font-size: 0.9em; line-height: 2; color: #333; text-align: left; display: inline-block;">
+┌────────┬────────┬────────┬──────────────┬─────┬──────────┬──────────┬──────────┐
+│ 第1欄  │ 第2欄  │ 第3欄  │ 第4欄起...    │ ... │ 倒數第3欄 │ 倒數第2欄 │ 倒數第1欄 │
+├────────┼────────┼────────┼──────────────┼─────┼──────────┼──────────┼──────────┤
+│ 班級   │ 座號   │ 姓名   │ 平時成績 × N │ ... │ 作業 1   │ 作業 2   │ 作業 3   │
+└────────┴────────┴────────┴──────────────┴─────┴──────────┴──────────┴──────────┘
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- 實際範例 -->
+                <div id="tab-example" class="tab-content">
+                    <h3>📝 完整範例（5次平時成績 + 3次作業）</h3>
+                    <div class="example-box">
+                        <table class="example-table">
+                            <thead>
+                                <tr>
+                                    <th>班級</th>
+                                    <th>座號</th>
+                                    <th>姓名</th>
+                                    <th style="background: #fff3cd; color: #856404;">平時1</th>
+                                    <th style="background: #fff3cd; color: #856404;">平時2</th>
+                                    <th style="background: #fff3cd; color: #856404;">平時3</th>
+                                    <th style="background: #fff3cd; color: #856404;">平時4</th>
+                                    <th style="background: #fff3cd; color: #856404;">平時5</th>
+                                    <th style="background: #d4edda; color: #155724;">作業1</th>
+                                    <th style="background: #d4edda; color: #155724;">作業2</th>
+                                    <th style="background: #d4edda; color: #155724;">作業3</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>101</td><td>1</td><td>張三</td>
+                                    <td>85</td><td>90</td><td>78</td><td>92</td><td>88</td>
+                                    <td>88</td><td>90</td><td>85</td>
+                                </tr>
+                                <tr class="alt-row">
+                                    <td>101</td><td>2</td><td>李四</td>
+                                    <td>92</td><td>88</td><td>95</td><td>87</td><td>91</td>
+                                    <td>75</td><td>82</td><td>90</td>
+                                </tr>
+                                <tr>
+                                    <td>102</td><td>1</td><td>王五</td>
+                                    <td>78</td><td>85</td><td>82</td><td>90</td><td>86</td>
+                                    <td>92</td><td>88</td><td>95</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 重要規則 -->
+                <div id="tab-rules" class="tab-content">
+                    <h3>⚠️ 格式規則</h3>
+                    <ul class="rule-list">
+                        <li class="warning"><strong>📌 規則 1：</strong>第一列必須是標題列，不能直接從資料開始</li>
+                        <li class="warning"><strong>📌 規則 2：</strong>資料從第二列開始，每列代表一位學生</li>
+                        <li><strong>📌 規則 3：</strong>平時成績欄位數量不限，可以只有 1 次，也可以有 20 次</li>
+                        <li><strong>📌 規則 4：</strong>作業成績固定為 3 次，必須放在最後 3 欄</li>
+                        <li><strong>📌 規則 5：</strong>空白儲存格自動視為 0 分處理</li>
+                        <li><strong>📌 規則 6：</strong>支援多個班級混在同一個檔案</li>
+                        <li><strong>📌 規則 7：</strong>請使用 .xlsx 格式，不支援 .xls 格式</li>
+                        <li class="danger"><strong>⚠️ 規則 8：</strong>除了第一列標題外，不要有其他說明文字或合併儲存格</li>
+                    </ul>
+                </div>
+
+                <!-- 下載範本 -->
+                <div id="tab-download" class="tab-content">
+                    <h3>💾 下載 Excel 範本檔案</h3>
+                    <p style="margin-bottom: 15px;">點擊下方按鈕下載標準格式的 Excel 範本，直接修改使用：</p>
+                    <button class="btn btn-success" onclick="downloadTemplate(5)">
+                        📥 下載範本（5次平時成績版）
+                    </button>
+                    <button class="btn btn-success" onclick="downloadTemplate(3)" style="margin-left: 10px;">
+                        📥 下載範本（3次平時成績版）
+                    </button>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+                        <strong>💡 使用提示：</strong><br>
+                        1. 下載範本後，用 Excel 或 Google Sheets 開啟<br>
+                        2. 依照格式填入您的學生成績<br>
+                        3. 可自由新增或刪除學生資料列<br>
+                        4. 可自由新增或刪除平時成績欄位（至少保留1欄）<br>
+                        5. 作業成績固定保留最後 3 欄<br>
+                        6. 存檔時請選擇 .xlsx 格式
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== 上傳區域 ==================== -->
+            <div class="section">
+                <h2>📁 上傳成績檔案</h2>
+                <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
+                    <div class="file-upload-icon">📂</div>
+                    <h3>點擊此處選擇 Excel 檔案</h3>
+                    <p style="color: #6c757d; margin-top: 5px;">支援 .xlsx 格式</p>
+                    <input type="file" id="fileInput" accept=".xlsx" onchange="handleFile(event)">
+                </div>
+                <div class="file-info" id="fileInfo"></div>
+            </div>
+
+            <!-- ==================== 參數設定 ==================== -->
+            <div class="section" id="controlSection" style="display: none;">
+                <h2>⚙️ 參數設定</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="topN">🏆 取最高分幾次：</label>
+                        <input type="number" id="topN" value="3" min="1" max="20">
+                    </div>
+                    <div class="control-group">
+                        <label for="regularWeight">📊 平時成績權重：</label>
+                        <input type="number" id="regularWeight" value="50" min="0" max="100"> %
+                    </div>
+                    <div class="control-group">
+                        <label for="homeworkWeight">📝 作業成績權重：</label>
+                        <input type="number" id="homeworkWeight" value="50" min="0" max="100"> %
+                    </div>
+                    <button class="btn btn-primary" onclick="calculate()">🎯 結算總成績</button>
+                    <button class="btn btn-warning" onclick="exportToExcel()">💾 匯出 Excel</button>
+                    <button class="btn btn-danger" onclick="resetAll()">🔄 全部重設</button>
+                </div>
+                <div id="weightWarning" class="message error"></div>
+            </div>
+
+            <!-- ==================== 計算結果 ==================== -->
+            <div class="result-area" id="resultArea">
+                <div class="stats-bar" id="statsBar"></div>
+                <div class="formula-display" id="formulaDisplay"></div>
+                <div class="export-preview" id="exportPreview"></div>
+                <div class="table-container">
+                    <div style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
+                        <table class="result-table" id="resultTable">
+                            <thead id="resultTableHead"></thead>
+                            <tbody id="resultTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 頁尾 ==================== -->
+        <div class="footer">
+            <div class="teacher-name">👨‍🏫 李向宇老師 製作</div>
+            <div class="teacher-title">成績計算系統 - 自訂權重版</div>
+            <div class="copyright">© 2025 版權所有 | 讓成績計算變得簡單又優雅</div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全域變數 ====================
+        let allStudents = [];
+        let regularCount = 0;
+        let calculatedResults = null;
+        let selectedTopN = 3;
+
+        // ==================== 分頁切換 ====================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // ==================== 下載範本 ====================
+        function downloadTemplate(regularTimes) {
+            const wb = XLSX.utils.book_new();
+            const headers = ['班級', '座號', '姓名'];
+            
+            // 加入平時成績標題
+            for (let i = 1; i <= regularTimes; i++) {
+                headers.push(`平時${i}`);
+            }
+            
+            // 加入作業成績標題
+            headers.push('作業1', '作業2', '作業3');
+
+            // 範例資料
+            const sampleData = [
+                headers,
+                ['101', '1', '張三', 85, 90, 78, 92, 88].slice(0, regularTimes + 3).concat([88, 90, 85]),
+                ['101', '2', '李四', 92, 88, 95, 87, 91].slice(0, regularTimes + 3).concat([75, 82, 90]),
+                ['101', '3', '王五', 78, 85, 82, 90, 86].slice(0, regularTimes + 3).concat([92, 88, 95]),
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+            XLSX.utils.book_append_sheet(wb, ws, '成績資料');
+            XLSX.writeFile(wb, `成績計算範本_${regularTimes}次平時.xlsx`);
+        }
+
+        // ==================== 處理上傳檔案 ====================
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.className = 'file-info show';
+            fileInfo.innerHTML = `
+                <strong>✅ 已選擇檔案：</strong>${file.name}<br>
+                <strong>📏 檔案大小：</strong>${(file.size / 1024).toFixed(2)} KB<br>
+                <strong>⏳ 正在讀取...</strong>
+            `;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    if (rows.length < 2) {
+                        showMessage('❌ 檔案格式錯誤：至少需要標題列和1筆資料', 'error');
+                        return;
+                    }
+
+                    const totalColumns = rows[0].length;
+
+                    if (totalColumns < 7) {
+                        showMessage('❌ 欄位數量不足：至少需要7欄', 'error');
+                        return;
+                    }
+
+                    // 計算平時成績次數 = 總欄位數 - 6 (班級、座號、姓名 + 3次作業)
+                    regularCount = totalColumns - 6;
+
+                    allStudents = [];
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length === 0) continue;
+                        if (!row[0] && !row[1] && !row[2]) continue;
+
+                        const student = {
+                            class: row[0] || '',
+                            number: row[1] || '',
+                            name: row[2] || '',
+                            regularScores: [],
+                            homeworkScores: []
+                        };
+
+                        // 讀取平時成績
+                        for (let j = 0; j < regularCount; j++) {
+                            student.regularScores.push(parseFloat(row[3 + j]) || 0);
+                        }
+
+                        // 讀取作業成績（最後3欄）
+                        for (let j = 0; j < 3; j++) {
+                            student.homeworkScores.push(parseFloat(row[totalColumns - 3 + j]) || 0);
+                        }
+
+                        allStudents.push(student);
+                    }
+
+                    const classes = new Set(allStudents.map(s => s.class));
+                    
+                    fileInfo.innerHTML = `
+                        <strong>✅ 檔案讀取成功！</strong><br>
+                        <strong>📊 班級數量：</strong>${classes.size} 個班級<br>
+                        <strong>👥 學生總數：</strong>${allStudents.length} 人<br>
+                        <strong>📝 平時成績次數：</strong>${regularCount} 次<br>
+                        <strong>📋 作業成績次數：</strong>3 次
+                    `;
+                    
+                    document.getElementById('controlSection').style.display = 'block';
+                    document.getElementById('topN').max = regularCount;
+                    
+                    if (parseInt(document.getElementById('topN').value) > regularCount) {
+                        document.getElementById('topN').value = regularCount;
+                    }
+
+                    document.getElementById('resultArea').classList.remove('show');
+                    calculatedResults = null;
+
+                } catch (error) {
+                    showMessage('❌ 讀取檔案時發生錯誤：' + error.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ==================== 顯示訊息 ====================
+        function showMessage(msg, type) {
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(m => m.classList.remove('show'));
+            
+            const messageDiv = document.querySelector('.message.' + type) || document.createElement('div');
+            if (!document.querySelector('.message.' + type)) {
+                messageDiv.className = 'message ' + type;
+                document.getElementById('controlSection').appendChild(messageDiv);
+            }
+            messageDiv.textContent = msg;
+            messageDiv.classList.add('show');
+            
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        // ==================== 計算成績 ====================
+        function calculate() {
+            if (allStudents.length === 0) {
+                showMessage('⚠️ 請先上傳成績檔案', 'error');
+                return;
+            }
+
+            const topN = parseInt(document.getElementById('topN').value);
+            const regularWeight = parseInt(document.getElementById('regularWeight').value);
+            const homeworkWeight = parseInt(document.getElementById('homeworkWeight').value);
+
+            if (topN < 1 || topN > regularCount) {
+                showMessage(`⚠️ 最高分次數必須在 1 到 ${regularCount} 之間`, 'error');
+                return;
+            }
+
+            if (regularWeight + homeworkWeight !== 100) {
+                document.getElementById('weightWarning').textContent = 
+                    `⚠️ 權重設定錯誤：平時(${regularWeight}%) + 作業(${homeworkWeight}%) = ${regularWeight + homeworkWeight}%，必須等於 100%`;
+                document.getElementById('weightWarning').classList.add('show');
+                return;
+            } else {
+                document.getElementById('weightWarning').classList.remove('show');
+            }
+
+            selectedTopN = topN;
+
+            // 計算每位學生的成績
+            calculatedResults = allStudents.map(student => {
+                // 將平時成績與索引配對，然後依分數排序
+                const scoresWithIndex = student.regularScores.map((score, index) => ({
+                    score: score,
+                    index: index
+                }));
+                scoresWithIndex.sort((a, b) => b.score - a.score);
+
+                // 取最高的 topN 次
+                const selectedTopScores = scoresWithIndex.slice(0, topN);
+                const selectedIndices = selectedTopScores.map(item => item.index);
+                const selectedScores = selectedIndices.map(idx => student.regularScores[idx]);
+                
+                // 計算平均
+                const regularAvg = selectedScores.reduce((sum, score) => sum + score, 0) / topN;
+                const homeworkAvg = student.homeworkScores.reduce((sum, score) => sum + score, 0) / 3;
+                const totalScore = (regularAvg * regularWeight / 100) + (homeworkAvg * homeworkWeight / 100);
+
+                return {
+                    ...student,
+                    selectedIndices: selectedIndices,
+                    selectedScores: selectedScores,
+                    regularAvg: regularAvg,
+                    homeworkAvg: homeworkAvg,
+                    totalScore: totalScore
+                };
+            });
+
+            displayResults(regularWeight, homeworkWeight);
+        }
+
+        // ==================== 顯示結果 ====================
+        function displayResults(regularWeight, homeworkWeight) {
+            const resultArea = document.getElementById('resultArea');
+            resultArea.classList.add('show');
+
+            // 統計卡片
+            const classes = new Set(calculatedResults.map(s => s.class));
+            document.getElementById('statsBar').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${classes.size}</div>
+                    <div class="stat-label">班級數量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${calculatedResults.length}</div>
+                    <div class="stat-label">學生總數</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${selectedTopN}/${regularCount}</div>
+                    <div class="stat-label">選取/總平時次數</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${regularWeight}:${homeworkWeight}</div>
+                    <div class="stat-label">平時:作業權重</div>
+                </div>
+            `;
+
+            // 計算公式
+            document.getElementById('formulaDisplay').innerHTML = `
+                <strong>🧮 計算公式：</strong><br>
+                ① 為每位學生選取平時成績最高的 <strong>${selectedTopN}</strong> 次（⭐標記）<br>
+                ② 平時平均 = 被選中的最高分總和 ÷ ${selectedTopN}<br>
+                ③ 作業平均 = (作業1 + 作業2 + 作業3) ÷ 3<br>
+                ④ <strong>總成績 = 平時平均 × ${regularWeight}% + 作業平均 × ${homeworkWeight}%</strong>
+            `;
+
+            // 被選中統計
+            const selectionStats = {};
+            for (let i = 0; i < regularCount; i++) selectionStats[i] = 0;
+            calculatedResults.forEach(student => {
+                student.selectedIndices.forEach(idx => selectionStats[idx]++);
+            });
+
+            const statsHTML = Object.keys(selectionStats).map(idx => {
+                const count = selectionStats[idx];
+                const pct = ((count / calculatedResults.length) * 100).toFixed(1);
+                return `平時${parseInt(idx) + 1}：被選中 <strong>${count}</strong> 次 (${pct}%)`;
+            }).join(' | ');
+
+            document.getElementById('formulaDisplay').innerHTML += `
+                <br><strong>📊 平時成績被選中統計：</strong><br>
+                <span style="font-size: 0.9em;">${statsHTML}</span>
+            `;
+
+            // 匯出預覽說明
+            document.getElementById('exportPreview').innerHTML = `
+                <h3>💾 匯出檔案說明</h3>
+                <p>📋 匯出欄位：班級 → 座號 → 姓名 → <strong>最高平時1~${selectedTopN}</strong> → 平時平均 → 作業1~3 → 作業平均 → 總成績</p>
+                <p>⭐ 每位學生只匯出他個人最高的 <strong>${selectedTopN}</strong> 次平時成績（由高到低排列）</p>
+                <p>📊 檔案包含權重設定與計算公式說明列</p>
+            `;
+
+            // 建立表格標頭
+            let headerHTML = '<tr><th>班級</th><th>座號</th><th>姓名</th>';
+            for (let i = 0; i < regularCount; i++) {
+                headerHTML += `<th>平時${i + 1}</th>`;
+            }
+            headerHTML += '<th>平時平均</th><th>作業1</th><th>作業2</th><th>作業3</th><th>作業平均</th><th>總成績</th></tr>';
+            document.getElementById('resultTableHead').innerHTML = headerHTML;
+
+            // 建立表格內容
+            let bodyHTML = '';
+            calculatedResults.forEach(student => {
+                bodyHTML += '<tr>';
+                bodyHTML += `<td>${student.class}</td><td>${student.number}</td><td>${student.name}</td>`;
+
+                // 顯示所有平時成績，被選中的加 ⭐
+                for (let i = 0; i < regularCount; i++) {
+                    const isSelected = student.selectedIndices.includes(i);
+                    bodyHTML += `<td class="${isSelected ? 'selected' : ''}">${student.regularScores[i]}</td>`;
+                }
+
+                bodyHTML += `<td><strong>${student.regularAvg.toFixed(2)}</strong></td>`;
+                bodyHTML += `<td>${student.homeworkScores[0]}</td>`;
+                bodyHTML += `<td>${student.homeworkScores[1]}</td>`;
+                bodyHTML += `<td>${student.homeworkScores[2]}</td>`;
+                bodyHTML += `<td><strong>${student.homeworkAvg.toFixed(2)}</strong></td>`;
+                bodyHTML += `<td><strong style="color: #667eea; font-size: 1.1em;">${student.totalScore.toFixed(2)}</strong></td>`;
+                bodyHTML += '</tr>';
+            });
+            document.getElementById('resultTableBody').innerHTML = bodyHTML;
+
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ==================== 匯出 Excel ====================
+        function exportToExcel() {
+            if (!calculatedResults) {
+                showMessage('⚠️ 請先進行成績結算', 'error');
+                return;
+            }
+
+            const regularWeight = parseInt(document.getElementById('regularWeight').value);
+            const homeworkWeight = parseInt(document.getElementById('homeworkWeight').value);
+            const topN = selectedTopN;
+
+            const wb = XLSX.utils.book_new();
+            
+            // 建立標題列
+            const headers = ['班級', '座號', '姓名'];
+            for (let i = 0; i < topN; i++) {
+                headers.push(`最高平時${i + 1}`);
+            }
+            headers.push('平時平均', '作業1', '作業2', '作業3', '作業平均', '總成績');
+
+            // 建立權重資訊列
+            const weightRow = ['', '', '權重設定：'];
+            for (let i = 0; i < topN; i++) {
+                weightRow.push('');
+            }
+            weightRow.push(
+                `平時佔 ${regularWeight}% (取最高${topN}次)`, 
+                '', '', '', 
+                `作業佔 ${homeworkWeight}%`, 
+                `公式：平時均×${regularWeight}% + 作業均×${homeworkWeight}%`
+            );
+
+            const exportData = [headers, weightRow];
+            
+            // 建立每位學生的資料列
+            calculatedResults.forEach(student => {
+                const row = [student.class, student.number, student.name];
+                
+                // 只加入該學生被選中的最高分平時成績（由高到低排序）
+                const sortedScores = [...student.selectedScores].sort((a, b) => b - a);
+                for (let i = 0; i < topN; i++) {
+                    row.push(sortedScores[i]);
+                }
+                
+                row.push(
+                    parseFloat(student.regularAvg.toFixed(2)),
+                    student.homeworkScores[0],
+                    student.homeworkScores[1],
+                    student.homeworkScores[2],
+                    parseFloat(student.homeworkAvg.toFixed(2)),
+                    parseFloat(student.totalScore.toFixed(2))
+                );
+                
+                exportData.push(row);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(exportData);
+            
+            // 設定欄寬
+            const colWidths = [
+                {wch: 8}, {wch: 8}, {wch: 12}
+            ];
+            for (let i = 0; i < topN; i++) {
+                colWidths.push({wch: 14});
+            }
+            colWidths.push({wch: 12}, {wch: 10}, {wch: 10}, {wch: 10}, {wch: 12}, {wch: 15});
+            ws['!cols'] = colWidths;
+
+            XLSX.utils.book_append_sheet(wb, ws, '成績計算結果');
+            XLSX.writeFile(wb, `成績計算結果_取最高${topN}次.xlsx`);
+
+            showMessage(`✅ 匯出成功！每位學生只顯示最高的 ${topN} 次平時成績`, 'success');
+        }
+
+        // ==================== 全部重設 ====================
+        function resetAll() {
+            allStudents = [];
+            regularCount = 0;
+            calculatedResults = null;
+            selectedTopN = 3;
+            
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').className = 'file-info';
+            document.getElementById('controlSection').style.display = 'none';
+            document.getElementById('resultArea').classList.remove('show');
+            document.getElementById('topN').value = '3';
+            document.getElementById('regularWeight').value = '50';
+            document.getElementById('homeworkWeight').value = '50';
+            
+            document.querySelectorAll('.message').forEach(m => m.classList.remove('show'));
+            
+            showMessage('🔄 已全部重設，可以重新上傳檔案', 'info');
+        }
+
+        // ==================== 權重自動調整 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            const regularInput = document.getElementById('regularWeight');
+            const homeworkInput = document.getElementById('homeworkWeight');
+            
+            regularInput.addEventListener('input', function() {
+                homeworkInput.value = 100 - (parseInt(this.value) || 0);
+            });
+            
+            homeworkInput.addEventListener('input', function() {
+                regularInput.value = 100 - (parseInt(this.value) || 0);
+            });
+        });
+    </script>
+</body>
+</html>
